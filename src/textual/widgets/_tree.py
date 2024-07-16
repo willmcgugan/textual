@@ -850,6 +850,8 @@ class Tree(Generic[TreeDataType], ScrollView, can_focus=True):
         return NodeID(id)
 
     def _get_node(self, line: int) -> TreeNode[TreeDataType] | None:
+        if line < 0 and not self.show_root:
+            return None
         try:
             tree_line = self._tree_lines[line]
         except IndexError:
