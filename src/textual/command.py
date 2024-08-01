@@ -1018,7 +1018,7 @@ class CommandPalette(SystemModalScreen):
 
     def _cancel_gather_commands(self) -> None:
         """Cancel any operation that is gather commands."""
-        self.workers.cancel_group(self, self._GATHER_COMMANDS_GROUP)
+        self.app.workers.cancel_group(self, self._GATHER_COMMANDS_GROUP)
 
     @on(Input.Changed)
     def _input(self, event: Input.Changed) -> None:

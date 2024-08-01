@@ -3938,7 +3938,7 @@ class Widget(DOMNode):
         self.scroll_to_region(message.region, animate=True)
 
     def _on_unmount(self) -> None:
-        self.workers.cancel_node(self)
+        self.app.workers.cancel_node(self)
 
     def action_scroll_home(self) -> None:
         if not self._allow_scroll:

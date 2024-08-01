@@ -412,11 +412,6 @@ class DOMNode(MessagePump):
             )
         self._auto_refresh = interval
 
-    @property
-    def workers(self) -> WorkerManager:
-        """The app's worker manager. Shortcut for `self.app.workers`."""
-        return self.app.workers
-
     def run_worker(
         self,
         work: WorkType[ResultType],
@@ -449,9 +444,9 @@ class DOMNode(MessagePump):
         # If we're running a worker from inside a secondary thread,
         # do so in a thread-safe way.
         if self.app._thread_id != threading.get_ident():
-            creator = partial(self.app.call_from_thread, self.workers._new_worker)
+            creator = partial(self.app.call_from_thread, self.app.workers._new_worker)
         else:
-            creator = self.workers._new_worker
+            creator = self.app.workers._new_worker
         worker: Worker[ResultType] = creator(
             work,
             self,
