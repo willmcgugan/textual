@@ -295,6 +295,10 @@ def test_tree_example(snap_compare):
     assert snap_compare(WIDGET_EXAMPLES_DIR / "tree.py")
 
 
+def test_tree_with_detail_example(snap_compare):
+    assert snap_compare(WIDGET_EXAMPLES_DIR / "detail_tree.py")
+
+
 def test_markdown_example(snap_compare):
     assert snap_compare(WIDGET_EXAMPLES_DIR / "markdown.py")
 

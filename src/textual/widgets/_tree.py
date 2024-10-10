@@ -101,6 +101,7 @@ class TreeNode(Generic[TreeDataType]):
         *,
         expanded: bool = True,
         allow_expand: bool = True,
+        detail: str | Text | None = None,
     ) -> None:
         """Initialise the node.
 
@@ -112,6 +113,7 @@ class TreeNode(Generic[TreeDataType]):
             data: Optional data to associate with the node.
             expanded: Should the node be attached in an expanded state?
             allow_expand: Should the node allow being expanded by the user?
+            detail: Optional detail text to display.
         """
         self._tree = tree
         self._parent = parent
@@ -127,6 +129,11 @@ class TreeNode(Generic[TreeDataType]):
         self._allow_expand = allow_expand
         self._updates: int = 0
         self._line: int = -1
+
+        if detail is None:
+            self._detail = Text("")
+        else:
+            self._detail = tree.process_label(detail)
 
     def __rich_repr__(self) -> rich.repr.Result:
         yield self._label.plain
@@ -356,6 +363,29 @@ class TreeNode(Generic[TreeDataType]):
         self._label = text_label
         self._tree.call_later(self._tree._refresh_node, self)
 
+    @property
+    def detail(self) -> Text:
+        """Detail text for the node."""
+        return self._detail
+
+    @detail.setter
+    def detail(self, detail: str | Text | None) -> None:
+        self.set_detail(detail)
+
+    def set_detail(self, detail: str | Text | None) -> None:
+        """Set the detail text for the node.
+
+        Args:
+            detail: A string or Text object with the detail text.
+        """
+        if detail is None:
+            detail = Text("")
+
+        self._updates += 1
+        text_detail = self._tree.process_label(detail)
+        self._detail = text_detail
+        self._tree.call_later(self._tree._refresh_node, self)
+
     def add(
         self,
         label: TextType,
@@ -365,6 +395,7 @@ class TreeNode(Generic[TreeDataType]):
         after: int | TreeNode[TreeDataType] | None = None,
         expand: bool = False,
         allow_expand: bool = True,
+        detail: str | Text | None = None,
     ) -> TreeNode[TreeDataType]:
         """Add a node to the sub-tree.
 
@@ -424,7 +455,7 @@ class TreeNode(Generic[TreeDataType]):
                 )
 
         text_label = self._tree.process_label(label)
-        node = self._tree._add_node(self, text_label, data)
+        node = self._tree._add_node(self, text_label, data, detail=detail)
         node._expanded = expand
         node._allow_expand = allow_expand
         self._updates += 1
@@ -440,6 +471,7 @@ class TreeNode(Generic[TreeDataType]):
         *,
         before: int | TreeNode[TreeDataType] | None = None,
         after: int | TreeNode[TreeDataType] | None = None,
+        detail: str | Text | None = None,
     ) -> TreeNode[TreeDataType]:
         """Add a 'leaf' node (a node that can not expand).
 
@@ -448,6 +480,7 @@ class TreeNode(Generic[TreeDataType]):
             data: Optional data.
             before: Optional index or `TreeNode` to add the node before.
             after: Optional index or `TreeNode` to add the node after.
+            detail: Optional detail text.
 
         Returns:
             New node.
@@ -466,6 +499,7 @@ class TreeNode(Generic[TreeDataType]):
             after=after,
             expand=False,
             allow_expand=False,
+            detail=detail,
         )
         return node
 
@@ -763,6 +797,7 @@ class Tree(Generic[TreeDataType], ScrollView, can_focus=True):
         id: str | None = None,
         classes: str | None = None,
         disabled: bool = False,
+        detail: str | Text | None = None,
     ) -> None:
         """Initialise a Tree.
 
@@ -777,10 +812,14 @@ class Tree(Generic[TreeDataType], ScrollView, can_focus=True):
 
         text_label = self.process_label(label)
 
+        text_detail = Text("")
+        if detail is not None:
+            text_detail = self.process_label(detail)
+
         self._updates = 0
         self._tree_nodes: dict[NodeID, TreeNode[TreeDataType]] = {}
         self._current_id = 0
-        self.root = self._add_node(None, text_label, data)
+        self.root = self._add_node(None, text_label, data, detail=text_detail)
         """The root node of the tree."""
         self._line_cache: LRUCache[LineCacheKey, Strip] = LRUCache(1024)
         self._tree_lines_cached: list[_TreeLine[TreeDataType]] | None = None
@@ -822,8 +861,11 @@ class Tree(Generic[TreeDataType], ScrollView, can_focus=True):
         label: Text,
         data: TreeDataType | None,
         expand: bool = False,
+        detail: str | Text | None = None,
     ) -> TreeNode[TreeDataType]:
-        node = TreeNode(self, parent, self._new_id(), label, data, expanded=expand)
+        node = TreeNode(
+            self, parent, self._new_id(), label, data, expanded=expand, detail=detail
+        )
         self._tree_nodes[node._id] = node
         self._updates += 1
         return node
@@ -853,6 +895,31 @@ class Tree(Generic[TreeDataType], ScrollView, can_focus=True):
             prefix = ("", base_style)
 
         text = Text.assemble(prefix, node_label)
+
+        if node._detail.cell_len > 0:
+            node_detail = node._detail.copy()
+            node_detail.stylize(style)
+
+            total_width = self.size.width
+            line = self._tree_lines[node.line]
+
+            guide_width = line._get_guide_width(self.guide_depth, self.show_root)
+
+            right_margin = 1
+            if self.show_vertical_scrollbar:
+                right_margin += 2
+
+            space_width = (
+                total_width
+                - text.cell_len
+                - node_detail.cell_len
+                - guide_width
+                - right_margin
+            )
+            space_width = max(1, space_width)
+            space_text = Text(" " * space_width)
+            text = Text.assemble(text, space_text, node_detail)
+
         return text
 
     def get_label_width(self, node: TreeNode[TreeDataType]) -> int:

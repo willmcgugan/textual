@@ -26,6 +26,26 @@ The example below creates a simple tree.
 Tree widgets have a "root" attribute which is an instance of a [TreeNode][textual.widgets.tree.TreeNode]. Call [add()][textual.widgets.tree.TreeNode.add] or [add_leaf()][textual.widgets.tree.TreeNode.add_leaf] to add new nodes underneath the root. Both these methods return a TreeNode for the child which you can use to add additional levels.
 
 
+All nodes have a `detail` attribute that can be used to provide additional information about the node. This information will be shown right justified in the tree node. The following example demonstrates how to use the `detail` attribute.
+
+=== "Output"
+
+
+    ```{.textual path="docs/examples/widgets/detail_tree.py"}
+
+    ```
+
+
+=== "detail_tree.py"
+
+
+    ```python
+
+    --8<-- "docs/examples/widgets/detail_tree.py"
+
+    ```
+
+
 ## Reactive Attributes
 
 | Name          | Type   | Default | Description                                     |

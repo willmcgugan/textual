@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## Unreleased
+
+### Added
+
+- Added support for a detail column to the Tree widget https://github.com/Textualize/textual/pull/5096
+
 ## [0.83.0] - 2024-10-10
 
 ### Added
