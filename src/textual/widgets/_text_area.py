@@ -3,10 +3,19 @@ from __future__ import annotations
 import dataclasses
 import re
 from collections import defaultdict
+from contextlib import contextmanager
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-from typing import TYPE_CHECKING, ClassVar, Iterable, Optional, Sequence, Tuple
+from typing import (
+    TYPE_CHECKING,
+    ClassVar,
+    Generator,
+    Iterable,
+    Optional,
+    Sequence,
+    Tuple,
+)
 
 from rich.console import RenderableType
 from rich.style import Style
@@ -485,6 +494,15 @@ TextArea {
         reactive is set as a string, the watcher will update this attribute to the
         corresponding `TextAreaTheme` object."""
 
+        self._scroll_cursor_visible = True
+        """When the cursor is moved in any way, it will scroll into view by default.
+
+        This flag can be used to switch that behavior off.
+
+        Don't set this directly, use the `disable_scroll_cursor_visible` context manager
+        instead.
+        """
+
         self.set_reactive(TextArea.soft_wrap, soft_wrap)
         self.set_reactive(TextArea.read_only, read_only)
         self.set_reactive(TextArea.show_line_numbers, show_line_numbers)
@@ -643,7 +661,8 @@ TextArea {
 
         cursor_location = selection.end
 
-        self.scroll_cursor_visible()
+        if self._scroll_cursor_visible:
+            self.scroll_cursor_visible()
 
         cursor_row, cursor_column = cursor_location
 
@@ -1309,6 +1328,17 @@ TextArea {
         """The location of the matching bracket, if there is one."""
         return self._matching_bracket_location
 
+    @contextmanager
+    def cursor_scroll_disabled(self) -> Generator[None, None, None]:
+        """Temporarily disable the automatic scrolling of the cursor into view.
+
+        By default, the cursor will always scroll into view when it's moved, unless
+        the code which performs that movement is called inside this context manager.
+        """
+        self._scroll_cursor_visible = False
+        yield
+        self._scroll_cursor_visible = True
+
     def get_text_range(self, start: Location, end: Location) -> str:
         """Get the text between a start and end location.
 
@@ -1612,6 +1642,17 @@ TextArea {
         """Finalize the selection that has been made using the mouse when the widget is hidden."""
         self._end_mouse_selection()
 
+    async def on_click(self, event: events.Click) -> None:
+        chain = event.chain
+        if chain % 4 == 0:
+            with self.cursor_scroll_disabled():
+                self.select_all()
+        elif chain % 3 == 0:
+            cursor_row, _ = self.cursor_location
+            self.select_line(cursor_row)
+        elif chain % 2 == 0:
+            self.select_word(self.cursor_location)
+
     async def _on_paste(self, event: events.Paste) -> None:
         """When a paste occurs, insert the text from the paste event into the document."""
         if self.read_only:
@@ -1734,6 +1775,18 @@ TextArea {
         current_row, current_column = end
         target = clamp_visitable((current_row + rows, current_column + columns))
         self.move_cursor(target, select, center, record_width)
+
+    def select_word(self, location: Location) -> None:
+        """Select the word at the given location."""
+        # Search for the start and end of a word from the current location.
+        # If we want the search to be inclusive of the current location, so start
+        # the search for the left boundary from one character to the right.
+        left = self.get_word_right_location(
+            self.get_word_left_location(self.navigator.get_location_right(location))
+        )
+        right = self.get_word_left_location(self.get_word_right_location(location))
+        self.selection = Selection(*sorted((left, right)))
+        self.record_cursor_width()
 
     def select_line(self, index: int) -> None:
         """Select all the text in the specified line.
@@ -1964,17 +2017,21 @@ TextArea {
         Returns:
             The location the cursor will jump on "jump word left".
         """
-        cursor_row, cursor_column = self.cursor_location
-        if cursor_row > 0 and cursor_column == 0:
+        return self.get_word_left_location(self.cursor_location)
+
+    def get_word_left_location(self, start: Location) -> Location:
+        """Get the location of the start of the word at the given location."""
+        start_row, start_column = start
+        if start_row > 0 and start_column == 0:
             # Going to the previous row
-            return cursor_row - 1, len(self.document[cursor_row - 1])
+            return start_row - 1, len(self.document[start_row - 1])
 
         # Staying on the same row
-        line = self.document[cursor_row][:cursor_column]
+        line = self.document[start_row][:start_column]
         search_string = line.rstrip()
         matches = list(re.finditer(self._word_pattern, search_string))
-        cursor_column = matches[-1].start() if matches else 0
-        return cursor_row, cursor_column
+        start_column = matches[-1].start() if matches else 0
+        return start_row, start_column
 
     def action_cursor_word_right(self, select: bool = False) -> None:
         """Move the cursor right by a single word, skipping leading whitespace."""
@@ -1991,25 +2048,29 @@ TextArea {
         Returns:
             The location the cursor will jump on "jump word right".
         """
-        cursor_row, cursor_column = self.selection.end
-        line = self.document[cursor_row]
-        if cursor_row < self.document.line_count - 1 and cursor_column == len(line):
+        return self.get_word_right_location(self.cursor_location)
+
+    def get_word_right_location(self, start: Location) -> Location:
+        """Get the location of the end of the word at the given location."""
+        start_row, start_column = start
+        line = self.document[start_row]
+        if start_row < self.document.line_count - 1 and start_column == len(line):
             # Moving to the line below
-            return cursor_row + 1, 0
+            return start_row + 1, 0
 
         # Staying on the same line
-        search_string = line[cursor_column:]
+        search_string = line[start_column:]
         pre_strip_length = len(search_string)
         search_string = search_string.lstrip()
         strip_offset = pre_strip_length - len(search_string)
 
         matches = list(re.finditer(self._word_pattern, search_string))
         if matches:
-            cursor_column += matches[0].start() + strip_offset
+            start_column += matches[0].start() + strip_offset
         else:
-            cursor_column = len(line)
+            start_column = len(line)
 
-        return cursor_row, cursor_column
+        return start_row, start_column
 
     def action_cursor_page_up(self) -> None:
         """Move the cursor and scroll up one page."""

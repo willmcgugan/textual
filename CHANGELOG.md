@@ -7,13 +7,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## Unreleased
 
-
-### Fixed
-
-- Fixed `Pilot.click` not working with `times` parameter https://github.com/Textualize/textual/pull/5398
-
 ### Added
 
+- Double clicking on a word in `TextArea` now selects the word https://github.com/Textualize/textual/pull/5405
+- Triple clicking in `TextArea` now selects the clicked line (or paragraph if wrapping is enabled) https://github.com/Textualize/textual/pull/5405
+- Quadruple clicking in `TextArea` now selects the entire document without scrolling the cursor into view https://github.com/Textualize/textual/pull/5405
+- Added `TextArea.cursor_scroll_disabled` context manager to temporarily disable the automatic scrolling of the cursor into view https://github.com/Textualize/textual/pull/5405
 - Added `from_app_focus` to `Focus` event to indicate if a widget is being focused because the app itself has regained focus or not https://github.com/Textualize/textual/pull/5379
 - - Added `Select.type_to_search` which allows you to type to move the cursor to a matching option https://github.com/Textualize/textual/pull/5403
 
@@ -23,6 +22,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated `TextArea` and `Input` behavior when there is a selection and the user presses left or right https://github.com/Textualize/textual/pull/5400
 - Footer can now be scrolled horizontally without holding `shift` https://github.com/Textualize/textual/pull/5404
 
+### Fixed
+
+- Fixed `Pilot.click` not working with `times` parameter https://github.com/Textualize/textual/pull/5398
 
 ## [1.0.0] - 2024-12-12
 
