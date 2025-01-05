@@ -820,7 +820,7 @@ class Compositor:
 
         contains = Region.contains
         if len(self.layers_visible) > y >= 0:
-            for widget, cropped_region, region in self.layers_visible[y]:
+            for widget, cropped_region, region in self.layers_visible[int(y)]:
                 if contains(cropped_region, x, y) and widget.visible:
                     return widget, region
         raise errors.NoWidget(f"No widget under screen coordinate ({x}, {y})")

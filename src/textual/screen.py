@@ -1374,16 +1374,16 @@ class Screen(Generic[ScreenResultType], Widget):
         """
         return events.MouseMove(
             widget,
-            event.x - region.x,
-            event.y - region.y,
-            event.delta_x,
-            event.delta_y,
+            event._x - region.x,
+            event._y - region.y,
+            event._delta_x,
+            event._delta_y,
             event.button,
             event.shift,
             event.meta,
             event.ctrl,
-            screen_x=event.screen_x,
-            screen_y=event.screen_y,
+            screen_x=event._screen_x,
+            screen_y=event._screen_y,
             style=event.style,
         )
 

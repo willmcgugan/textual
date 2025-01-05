@@ -50,8 +50,11 @@ class XTermParser(Parser[Message]):
     _re_sgr_mouse = re.compile(r"\x1b\[<(\d+);(\d+);(\d+)([Mm])")
 
     def __init__(self, debug: bool = False) -> None:
-        self.last_x = 0
-        self.last_y = 0
+        self.last_x = 0.0
+        self.last_y = 0.0
+        self.mouse_pixels = False
+        self.terminal_size: tuple[int, int] | None = None
+        self.terminal_pixel_size: tuple[int, int] | None = None
         self._debug_log_file = open("keys.log", "at") if debug else None
         super().__init__()
         self.debug_log("---")
@@ -70,8 +73,18 @@ class XTermParser(Parser[Message]):
         if sgr_match:
             _buttons, _x, _y, state = sgr_match.groups()
             buttons = int(_buttons)
-            x = int(_x) - 1
-            y = int(_y) - 1
+            x = float(int(_x) - 1)
+            y = float(int(_y) - 1)
+            if (
+                self.mouse_pixels
+                and self.terminal_pixel_size is not None
+                and self.terminal_size is not None
+            ):
+                x_ratio = self.terminal_pixel_size[0] / self.terminal_size[0]
+                y_ratio = self.terminal_pixel_size[1] / self.terminal_size[1]
+                x /= x_ratio
+                y /= y_ratio
+
             delta_x = x - self.last_x
             delta_y = y - self.last_y
             self.last_x = x
@@ -120,6 +133,9 @@ class XTermParser(Parser[Message]):
         def on_token(token: Message) -> None:
             """Hook to log events."""
             self.debug_log(str(token))
+            if isinstance(token, events.Resize):
+                self.terminal_size = token.size
+                self.terminal_pixel_size = token.pixel_size
             token_callback(token)
 
         def on_key_token(event: events.Key) -> None:
@@ -228,6 +244,10 @@ class XTermParser(Parser[Message]):
                         (int(width), int(height)),
                         (int(pixel_width), int(pixel_height)),
                     )
+
+                    self.terminal_size = resize_event.size
+                    self.terminal_pixel_size = resize_event.pixel_size
+                    self.mouse_pixels = True
                     on_token(resize_event)
                     break
 
@@ -268,7 +288,6 @@ class XTermParser(Parser[Message]):
                         if mode_id == "2026" and setting_parameter > 0:
                             on_token(messages.TerminalSupportsSynchronizedOutput())
                         elif mode_id == "2048" and not IS_ITERM:
-                            # TODO: remove "and not IS_ITERM" when https://gitlab.com/gnachman/iterm2/-/issues/11961 is fixed
                             in_band_event = messages.TerminalSupportInBandWindowResize.from_setting_parameter(
                                 setting_parameter
                             )

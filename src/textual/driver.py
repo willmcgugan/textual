@@ -89,10 +89,10 @@ class Driver(ABC):
         else:
             offset_x, offset_y = self.cursor_origin
         if isinstance(message, events.MouseEvent):
-            message.x -= offset_x
-            message.y -= offset_y
-            message.screen_x -= offset_x
-            message.screen_y -= offset_y
+            message._x -= offset_x
+            message._y -= offset_y
+            message._screen_x -= offset_x
+            message._screen_y -= offset_y
 
         if isinstance(message, events.MouseDown):
             if message.button:

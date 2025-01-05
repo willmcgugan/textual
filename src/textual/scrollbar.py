@@ -259,7 +259,7 @@ class ScrollBar(Widget):
 
     window_virtual_size: Reactive[int] = Reactive(100)
     window_size: Reactive[int] = Reactive(0)
-    position: Reactive[int] = Reactive(0)
+    position: Reactive[float] = Reactive(0)
     mouse_over: Reactive[bool] = Reactive(False)
     grabbed: Reactive[Offset | None] = Reactive(None)
 
@@ -363,22 +363,17 @@ class ScrollBar(Widget):
             y: float | None = None
             if self.vertical:
                 virtual_size = self.window_virtual_size
-                y = round(
-                    self.grabbed_position
-                    + (
-                        (event.screen_y - self.grabbed.y)
-                        * (virtual_size / self.window_size)
-                    )
+                y = self.grabbed_position + (
+                    (event._screen_y - self.grabbed.y)
+                    * (virtual_size / self.window_size)
                 )
             else:
                 virtual_size = self.window_virtual_size
-                x = round(
-                    self.grabbed_position
-                    + (
-                        (event.screen_x - self.grabbed.x)
-                        * (virtual_size / self.window_size)
-                    )
+                x = self.grabbed_position + (
+                    (event._screen_x - self.grabbed.x)
+                    * (virtual_size / self.window_size)
                 )
+            print(event)
             self.post_message(ScrollTo(x=x, y=y))
         event.stop()
 

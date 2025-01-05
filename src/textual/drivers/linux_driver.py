@@ -62,6 +62,7 @@ class LinuxDriver(Driver):
         # keep track of this.
         self._must_signal_resume = False
         self._in_band_window_resize = False
+        self._mouse_pixels = False
 
         # Put handlers for SIGTSTP and SIGCONT in place. These are necessary
         # to support the user pressing Ctrl+Z (or whatever the dev might
@@ -133,6 +134,12 @@ class LinuxDriver(Driver):
 
         # Note: E.g. lxterminal understands 1000h, but not the urxvt or sgr
         #       extensions.
+
+    def _enable_mouse_pixels(self) -> None:
+        if not self._mouse:
+            return
+        self.write("\x1b[?1016h")
+        self._mouse_pixels = True
 
     def _enable_bracketed_paste(self) -> None:
         """Enable bracketed paste mode."""
@@ -440,7 +447,7 @@ class LinuxDriver(Driver):
             try:
                 for event in feed(""):
                     pass
-            except ParseError:
+            except (EOFError, ParseError):
                 pass
 
     def process_message(self, message: Message) -> None:
@@ -452,6 +459,7 @@ class LinuxDriver(Driver):
                 self._in_band_window_resize = message.supported
             elif message.enabled:
                 self._in_band_window_resize = message.supported
+            self._enable_mouse_pixels()
             # Send up-to-date message
             super().process_message(
                 TerminalSupportInBandWindowResize(

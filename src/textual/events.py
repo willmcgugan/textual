@@ -344,44 +344,44 @@ class MouseEvent(InputEvent, bubble=True):
 
     __slots__ = [
         "widget",
-        "x",
-        "y",
-        "delta_x",
-        "delta_y",
+        "_x",
+        "_y",
+        "_delta_x",
+        "_delta_y",
         "button",
         "shift",
         "meta",
         "ctrl",
-        "screen_x",
-        "screen_y",
+        "_screen_x",
+        "_screen_y",
         "_style",
     ]
 
     def __init__(
         self,
         widget: Widget | None,
-        x: int,
-        y: int,
-        delta_x: int,
-        delta_y: int,
+        x: float,
+        y: float,
+        delta_x: float,
+        delta_y: float,
         button: int,
         shift: bool,
         meta: bool,
         ctrl: bool,
-        screen_x: int | None = None,
-        screen_y: int | None = None,
+        screen_x: float | None = None,
+        screen_y: float | None = None,
         style: Style | None = None,
     ) -> None:
         super().__init__()
         self.widget: Widget | None = widget
         """The widget under the mouse at the time of a click."""
-        self.x = x
+        self._x = x
         """The relative x coordinate."""
-        self.y = y
+        self._y = y
         """The relative y coordinate."""
-        self.delta_x = delta_x
+        self._delta_x = delta_x
         """Change in x since the last message."""
-        self.delta_y = delta_y
+        self._delta_y = delta_y
         """Change in y since the last message."""
         self.button = button
         """Indexed of the pressed button."""
@@ -391,11 +391,35 @@ class MouseEvent(InputEvent, bubble=True):
         """`True` if the meta key is pressed."""
         self.ctrl = ctrl
         """`True` if the ctrl key is pressed."""
-        self.screen_x = x if screen_x is None else screen_x
+        self._screen_x = x if screen_x is None else screen_x
         """The absolute x coordinate."""
-        self.screen_y = y if screen_y is None else screen_y
+        self._screen_y = y if screen_y is None else screen_y
         """The absolute y coordinate."""
         self._style = style or Style()
+
+    @property
+    def x(self) -> int:
+        return int(self._x)
+
+    @property
+    def y(self) -> int:
+        return int(self._y)
+
+    @property
+    def delta_x(self) -> int:
+        return int(self._delta_x)
+
+    @property
+    def delta_y(self) -> int:
+        return int(self._delta_y)
+
+    @property
+    def screen_x(self) -> int:
+        return int(self._screen_x)
+
+    @property
+    def screen_y(self) -> int:
+        return int(self._screen_y)
 
     @classmethod
     def from_event(
@@ -403,30 +427,30 @@ class MouseEvent(InputEvent, bubble=True):
     ) -> MouseEventT:
         new_event = cls(
             widget,
-            event.x,
-            event.y,
-            event.delta_x,
-            event.delta_y,
+            event._x,
+            event._y,
+            event._delta_x,
+            event._delta_y,
             event.button,
             event.shift,
             event.meta,
             event.ctrl,
-            event.screen_x,
-            event.screen_y,
+            event._screen_x,
+            event._screen_y,
             event._style,
         )
         return new_event
 
     def __rich_repr__(self) -> rich.repr.Result:
         yield self.widget
-        yield "x", self.x
-        yield "y", self.y
-        yield "delta_x", self.delta_x, 0
-        yield "delta_y", self.delta_y, 0
+        yield "x", self._x
+        yield "y", self._y
+        yield "delta_x", self._delta_x, 0
+        yield "delta_y", self._delta_y, 0
         if self.screen_x != self.x:
-            yield "screen_x", self.screen_x
+            yield "screen_x", self._screen_x
         if self.screen_y != self.y:
-            yield "screen_y", self.screen_y
+            yield "screen_y", self._screen_y
         yield "button", self.button, 0
         yield "shift", self.shift, False
         yield "meta", self.meta, False
@@ -493,16 +517,16 @@ class MouseEvent(InputEvent, bubble=True):
     def _apply_offset(self, x: int, y: int) -> MouseEvent:
         return self.__class__(
             self.widget,
-            x=self.x + x,
-            y=self.y + y,
-            delta_x=self.delta_x,
-            delta_y=self.delta_y,
+            x=self._x + x,
+            y=self._y + y,
+            delta_x=self._delta_x,
+            delta_y=self._delta_y,
             button=self.button,
             shift=self.shift,
             meta=self.meta,
             ctrl=self.ctrl,
-            screen_x=self.screen_x,
-            screen_y=self.screen_y,
+            screen_x=self._screen_x,
+            screen_y=self._screen_y,
             style=self.style,
         )
 
