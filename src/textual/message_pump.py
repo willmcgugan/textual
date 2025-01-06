@@ -600,6 +600,7 @@ class MessagePump(metaclass=_MessagePumpMeta):
                     break
                 if pending is None or not message.can_replace(pending):
                     break
+
                 try:
                     message = await self._get_message()
                 except MessagePumpClosed:

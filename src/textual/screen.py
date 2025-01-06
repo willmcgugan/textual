@@ -1214,7 +1214,6 @@ class Screen(Generic[ScreenResultType], Widget):
     def _screen_resized(self, size: Size):
         """Called by App when the screen is resized."""
         if self.stack_updates:
-            self._compositor_refresh()
             self._refresh_layout(size)
 
     def _on_screen_resume(self) -> None:
@@ -1248,9 +1247,13 @@ class Screen(Generic[ScreenResultType], Widget):
 
     async def _on_resize(self, event: events.Resize) -> None:
         event.stop()
-        self._screen_resized(event.size)
+        size = self.app.size
+        if self.size == size:
+            return
+
+        self._screen_resized(size)
         for screen in self.app._background_screens:
-            screen._screen_resized(event.size)
+            screen._screen_resized(size)
 
     def _update_tooltip(self, widget: Widget) -> None:
         """Update the content of the tooltip."""
