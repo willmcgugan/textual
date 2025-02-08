@@ -200,7 +200,7 @@ class _Template(Validator):
             cursor_position += 1
         return value, cursor_position
 
-    def insert_text_at_cursor(self, text: str) -> str | None:
+    def insert_text_at_cursor(self, text: str) -> tuple[str, int] | None:
         """Inserts `text` at current cursor position. If not present in `text`, any expected separator is automatically
         inserted at the correct position.
 
@@ -609,6 +609,37 @@ class MaskedInput(Input, can_focus=True):
             self.value, self.cursor_position = new_value
         else:
             self.restricted()
+
+    def replace(self, text: str, start: int, end: int):
+        """Replace the text between the start and end locations with the given text.
+
+        Args:
+            text: Text to replace the existing text with.
+            start: Start index to replace (inclusive).
+            end: End index to replace (inclusive).
+        """
+
+        self.cursor_position = start
+        # Handle case where cursor start on a separator
+        self._template.move_cursor(1)
+        self._template.move_cursor(-1)
+        if self.cursor_position < start:
+            self._template.move_cursor(1)
+
+        for char in text:
+            if self.cursor_position >= end:
+                return
+            new_value_cursor_position = self._template.insert_text_at_cursor(char)
+            if new_value_cursor_position is None:
+                self.restricted()
+                return
+            self.value, self.cursor_position = new_value_cursor_position
+
+        last_cursor_position = self.cursor_position
+        while self.cursor_position < min(end, len(self.value)):
+            self._template.delete_at_position()
+            self._template.move_cursor(1)
+        self.cursor_position = last_cursor_position
 
     def clear(self) -> None:
         """Clear the masked input."""
