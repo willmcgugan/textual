@@ -343,7 +343,6 @@ class DataTable(ScrollView, Generic[CellType], can_focus=True):
         }
 
         &:dark {
-            background: $surface;
             & > .datatable--even-row {
                 background: $surface-darken-1 40%;
             }
