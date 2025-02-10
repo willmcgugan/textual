@@ -1046,6 +1046,30 @@ class Tree(Generic[TreeDataType], ScrollView, can_focus=True):
         except KeyError:
             raise UnknownNodeID(f"Unknown NodeID ({node_id}) in tree") from None
 
+    def get_node_with_data(self, value: str | int, *keys) -> TreeNode[TreeDataType] | None:
+        """Returns the first node that got a matching value in the json data field
+        under the chain of *keys given.
+
+        usage example: Tree.get_node_with_data(42, 'database', 'id')
+        Args:
+            value: str|int of the desired data in the data json
+            *keys: chain of keys to the nested value
+
+        Returns:
+            The first Node with the desired value or None
+        """
+        for treeline in self._tree_lines:
+            if treeline.node.data:
+                data = treeline.node.data
+                try:
+                    for key in keys:
+                        data = data[key]
+                    if data == value:
+                        return treeline.node
+                except(KeyError, TypeError):
+                    continue
+        return None # if nothing was found
+
     def validate_cursor_line(self, value: int) -> int:
         """Prevent cursor line from going outside of range.
 
