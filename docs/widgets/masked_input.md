@@ -18,9 +18,12 @@ The example below shows a masked input to ease entering a credit card number.
 
 === "masked_input.py"
 
-    ```python
+    ```python hl_lines="6-13 25"
     --8<-- "docs/examples/widgets/masked_input.py"
     ```
+
+    1. Textual offers default styling for the `-invalid` CSS class (a red border), which is automatically applied to the `MaskedInput` when validation fails. We can also provide custom styling for the `-valid` class, as seen here. In this case, we add a green border around the `MaskedInput` to indicate successful validation.
+    2. This example shows how to define a template mask for a credit card number, which requires 16 digits in groups of 4.
 
 ## Reactive Attributes
 
