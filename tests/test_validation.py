@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+
 import pytest
 
 from textual.validation import (
     URL,
     Failure,
+    File,
+    Folder,
     Function,
     Integer,
     Length,
@@ -160,7 +163,12 @@ def test_Regex_validate(regex, value, expected_result):
         ("123", 100, 200, True),  # valid integer within range
         ("99", 100, 200, False),  # valid integer but not in range
         ("201", 100, 200, False),  # valid integer but not in range
-        ("1.23e4", None, None, False),  # valid scientific notation, even resolving to an integer, is not valid
+        (
+            "1.23e4",
+            None,
+            None,
+            False,
+        ),  # valid scientific notation, even resolving to an integer, is not valid
         ("123.", None, None, False),  # periods not valid in integers
         ("123_456", None, None, True),  # underscores are valid python
         ("_123_456", None, None, False),  # leading underscores are not valid python
@@ -232,3 +240,150 @@ def test_Integer_failure_description_when_NotANumber():
     result = validator.validate("x")
     assert result.is_valid is False
     assert result.failure_descriptions[0] == "Must be a valid integer."
+
+
+# Test File validator
+
+
+def test_File_existing_file_with_correct_extension(tmp_path):
+    # create dir
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    temp_file = tmp_path / "correct_extension.txt"
+    # create file
+    temp_file.touch()
+    # instantiate File validator
+    validator = File(must_exists=True, extensions=".txt")
+    result = validator.validate(str(temp_file))
+    assert result.is_valid
+
+
+def test_File_existing_file_with_wrong_extension(tmp_path):
+    # create dir
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    temp_file = tmp_path / "wrong_extension.txt"
+    # create file
+    temp_file.touch()
+    # instantiate File validator
+    validator = File(must_exists=True, extensions=".md")
+    result = validator.validate(str(temp_file))
+    assert not result.is_valid
+    assert (
+        result.failure_descriptions[0]
+        == "File has not a valid extensions, supported extensions are: ['.md']"
+    )
+
+
+def test_File_non_existing_file_when_must_exist(tmp_path):
+    # create dir
+    temp_file = tmp_path / "nonexisting_file.txt"
+    # instantiate File validator
+    validator = File(must_exists=True)
+    result = validator.validate(str(temp_file))
+    assert not result.is_valid
+    assert result.failure_descriptions[0] == "File does not exist"
+
+
+def test_File_non_existing_file_when_must_not_exist(tmp_path):
+    temp_file = tmp_path / "nonexisting_file.txt"
+    # instantiate File validator
+    validator = File(must_exists=False)
+    result = validator.validate(str(temp_file))
+    assert result.is_valid
+
+
+def test_File_existing_file_without_permission(tmp_path):
+    # create dir
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    temp_file = tmp_path / "wrong_permission.txt"
+    # create file
+    temp_file.touch()
+    # instantiate File validator
+    # Simulate no read permission
+    temp_file.chmod(0o200)
+    validator = File(must_exists=True, required_permissions="r")
+    result = validator.validate(str(temp_file))
+    assert not result.is_valid
+    assert result.failure_descriptions[0] == "File is not readable by this user"
+
+
+def test_File_existing_file_with_required_permission(tmp_path):
+    # create dir
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    temp_file = tmp_path / "correct_permission.txt"
+    # create file
+    temp_file.touch()
+    # instantiate File validator
+    validator = File(must_exists=True, required_permissions="r")
+    result = validator.validate(str(temp_file))
+    assert result.is_valid
+
+
+def test_File_conflict_existence_contraints(tmp_path):
+    # instantiate File validator
+    with pytest.raises(ValueError):
+        File(must_exists=True, must_not_exists=True, extensions=".txt")
+
+
+# Test Folder validator
+
+
+def test_Folder_existing_folder_with_permissions(tmp_path):
+    # create dir
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    # instantiate File validator
+    validator = Folder(must_exists=True, required_permissions="rwx")
+    result = validator.validate(str(tmp_path))
+    assert result.is_valid
+
+
+def test_Folder_non_existing_folder_when_must_exist(tmp_path):
+    temp_folder = tmp_path / "nonexisting_folder"
+    validator = Folder(must_exists=True)
+    result = validator.validate(str(temp_folder))
+    assert not result.is_valid
+    assert result.failure_descriptions[0] == "Folder does not exist"
+
+
+def test_Folder_non_existing_folder_when_must_not_exist(tmp_path):
+    temp_folder = tmp_path / "nonexisting_folder"
+    validator = Folder(must_exists=False)
+    result = validator.validate(temp_folder)
+    assert result.is_valid
+
+
+def test_Folder_existing_folder_without_write_permission(tmp_path):
+    temp_folder = tmp_path / "nowrite_permission"
+    temp_folder.mkdir(parents=True, exist_ok=True)
+    # Remove write permission
+    temp_folder.chmod(0o500)
+    validator = Folder(must_exists=True, required_permissions="w")
+    result = validator.validate(str(temp_folder))
+    assert not result.is_valid
+    assert result.failure_descriptions[0] == "Folder is not writable by this user"
+
+
+def test_Folder_existing_folder_without_execute_permission(tmp_path):
+    temp_folder = tmp_path / "noexec_permission"
+    temp_folder.mkdir(parents=True, exist_ok=True)
+    # Remove execute permission
+    temp_folder.chmod(0o600)
+    validator = Folder(must_exists=True, required_permissions="x")
+    result = validator.validate(str(temp_folder))
+    assert not result.is_valid
+    assert result.failure_descriptions[0] == "Folder is not executable by this user"
+
+
+def test_Folder_is_file(tmp_path):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    temp_file = tmp_path / "a_file.txt"
+    temp_file.touch()
+    validator = Folder(must_exists=True)
+    result = validator.validate(str(temp_file))
+    assert not result.is_valid
+    assert result.failure_descriptions[0] == "Path is not a folder"
+
+
+def test_Folder_conflict_existence_contraints(tmp_path):
+    # instantiate File validator
+    with pytest.raises(ValueError):
+        Folder(must_exists=True, must_not_exists=True)

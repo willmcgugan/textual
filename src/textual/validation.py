@@ -10,8 +10,10 @@ from __future__ import annotations
 
 import math
 import re
+import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Callable, Pattern, Sequence
 from urllib.parse import urlparse
 
@@ -355,7 +357,7 @@ class Integer(Number):
 
         # We know it's a number, but is that number an integer?
         try:
-            int_value = int(value)
+            int(value)
         except ValueError:
             return ValidationResult.failure([Integer.NotAnInteger(self, value)])
         return self.success()
@@ -511,3 +513,208 @@ class URL(Validator):
             A string description of the failure.
         """
         return "Must be a valid URL."
+
+
+class File(Validator):
+    def __init__(
+        self,
+        must_exists: bool = False,
+        must_not_exists: bool = False,
+        required_permissions: str | None = None,
+        extensions: str | list[str] | None = None,
+        failure_description: str | None = None,
+    ) -> None:
+        """
+        Initialize the file validator.
+
+        :param must_exist: Specify if the file must exist.
+        :param must__not_exist: Specify if the file must not exist.
+        :param required_permissions: File permission to check (e.g., "r", "w", "x", "rwx").
+        :param extensions: Expected file extension (e.g., ".txt").
+        """
+        super().__init__(failure_description=failure_description)
+        self.must_exists = must_exists
+        self.must_not_exists = must_not_exists
+        if self.must_exists and self.must_not_exists:
+            raise ValueError(
+                "Conflicts on existence contraints, a path must exists or not"
+            ) from None
+        self.required_permissions = required_permissions or ""
+        self.extensions = [extensions] if isinstance(extensions, str) else extensions
+
+    class NotAFile(Failure):
+        """Indicate that the path is not a file."""
+
+    class DoesNotExists(Failure):
+        """Indicate that the file does not exists."""
+
+    class AlreadyExists(Failure):
+        """Indicate that the file exists and should not."""
+
+    class ExtensionFileNotSupported(Failure):
+        """Indicate that the file exists and should not."""
+
+    class IsNotReadable(Failure):
+        """Indicate that the file is not readable."""
+
+    class IsNotWritable(Failure):
+        """Indicate that the file is not writable."""
+
+    class IsNotExecutable(Failure):
+        """Indicate that the file is not executable."""
+
+    def validate(self, value: str) -> ValidationResult:
+        """Check if the given path meets all file requirements."""
+        file_path = Path(value)
+
+        # Check if path is a file
+        if file_path.exists() and not file_path.is_file():
+            return ValidationResult.failure([File.NotAFile(self, value)])
+
+        # Check existence
+        if self.must_exists and not file_path.exists():
+            return ValidationResult.failure([File.DoesNotExists(self, value)])
+        if self.must_not_exists and file_path.exists():
+            return ValidationResult.failure([File.AlreadyExists(self, value)])
+
+        # Check file permissions
+        if file_path.exists():
+            if "r" in self.required_permissions:
+                if not os.access(file_path, mode=os.R_OK):
+                    return ValidationResult.failure([File.IsNotReadable(self, value)])
+            if "w" in self.required_permissions:
+                if not os.access(file_path, mode=os.W_OK):
+                    return ValidationResult.failure([File.IsNotWritable(self, value)])
+            if "x" in self.required_permissions:
+                if not os.access(file_path, mode=os.X_OK):
+                    return ValidationResult.failure([File.IsNotExecutable(self, value)])
+
+        # Check file extension
+        if self.extensions and file_path.suffix not in self.extensions:
+            return ValidationResult.failure(
+                [File.ExtensionFileNotSupported(self, value)]
+            )
+
+        return self.success()
+
+    def describe_failure(self, failure: Failure) -> str | None:
+        """Describes why the validator failed.
+
+        Args:
+            failure: Information about why the validation failed.
+
+        Returns:
+            A string description of the failure.
+        """
+        if isinstance(failure, File.NotAFile):
+            return "Path is not a file"
+        elif isinstance(failure, File.DoesNotExists):
+            return "File does not exist"
+        elif isinstance(failure, File.AlreadyExists):
+            return "File does already exist"
+        elif isinstance(failure, File.IsNotReadable):
+            return "File is not readable by this user"
+        elif isinstance(failure, File.IsNotWritable):
+            return "File is not writable by this user"
+        elif isinstance(failure, File.IsNotExecutable):
+            return "File is not executable by this user"
+        elif isinstance(failure, File.ExtensionFileNotSupported):
+            return f"File has not a valid extensions, supported extensions are: {self.extensions}"
+        return None
+
+
+# Validator for folder paths
+class Folder(Validator):
+    def __init__(
+        self,
+        must_exists: bool = False,
+        must_not_exists: bool = False,
+        required_permissions: str | None = None,
+        failure_description: str | None = None,
+    ) -> None:
+        """
+        Initialize the folder validator.
+
+        :param must_exists: Specify if the folder must exist.
+        :param must_not_exists: Specify if the folder must not exist.
+        :param required_permission: Folder permission to check (e.g., "r", "w", "x").
+        """
+        super().__init__(failure_description=failure_description)
+        self.must_exists = must_exists
+        self.must_not_exists = must_not_exists
+        if self.must_exists and self.must_not_exists:
+            raise ValueError(
+                "Conflicts on existence contraints, a path must exists or not"
+            ) from None
+        self.required_permissions = required_permissions or ""
+
+    class NotAFolder(Failure):
+        """Indicate that the path is not a folder."""
+
+    class DoesNotExists(Failure):
+        """Indicate that the file does not exists."""
+
+    class AlreadyExists(Failure):
+        """Indicate that the file exists and should not."""
+
+    class IsNotReadable(Failure):
+        """Indicate that the file is not readable."""
+
+    class IsNotWritable(Failure):
+        """Indicate that the file is not writable."""
+
+    class IsNotExecutable(Failure):
+        """Indicate that the file is not executable."""
+
+    def validate(self, value: str) -> ValidationResult:
+        """Check if the given path meets all file requirements."""
+        folder_path = Path(value)
+
+        # Check if path is a folder
+        if folder_path.exists() and not folder_path.is_dir():
+            return ValidationResult.failure([Folder.NotAFolder(self, value)])
+
+        # Check existence
+        if self.must_exists and not folder_path.exists():
+            return ValidationResult.failure([Folder.DoesNotExists(self, value)])
+        if self.must_not_exists and folder_path.exists():
+            return ValidationResult.failure([Folder.AlreadyExists(self, value)])
+
+        # Check file permissions
+        if folder_path.exists():
+            if "r" in self.required_permissions:
+                if not os.access(folder_path, mode=os.R_OK):
+                    return ValidationResult.failure([Folder.IsNotReadable(self, value)])
+            if "w" in self.required_permissions:
+                if not os.access(folder_path, mode=os.W_OK):
+                    return ValidationResult.failure([Folder.IsNotWritable(self, value)])
+            if "x" in self.required_permissions:
+                if not os.access(folder_path, mode=os.X_OK):
+                    return ValidationResult.failure(
+                        [Folder.IsNotExecutable(self, value)]
+                    )
+
+        return self.success()
+
+    def describe_failure(self, failure: Failure) -> str | None:
+        """Describes why the validator failed.
+
+        Args:
+            failure: Information about why the validation failed.
+
+        Returns:
+            A string description of the failure.
+        """
+        if isinstance(failure, Folder.NotAFolder):
+            return "Path is not a folder"
+        elif isinstance(failure, Folder.DoesNotExists):
+            return "Folder does not exist"
+        elif isinstance(failure, Folder.AlreadyExists):
+            return "Folder does already exist"
+        elif isinstance(failure, Folder.IsNotReadable):
+            return "Folder is not readable by this user"
+        elif isinstance(failure, Folder.IsNotWritable):
+            return "Folder is not writable by this user"
+        elif isinstance(failure, Folder.IsNotExecutable):
+            return "Folder is not executable by this user"
+        return None
