@@ -84,7 +84,12 @@ class Input(ScrollView):
             "Move cursor left a word and select",
             show=False,
         ),
-        Binding("right", "cursor_right", "Move cursor right", show=False),
+        Binding(
+            "right",
+            "cursor_right",
+            "Move cursor right or accept the completion suggestion",
+            show=False,
+        ),
         Binding(
             "shift+right",
             "cursor_right(True)",
@@ -123,18 +128,27 @@ class Input(ScrollView):
     | Key(s) | Description |
     | :- | :- |
     | left | Move the cursor left. |
+    | shift+left | Move cursor left and select. |
     | ctrl+left | Move the cursor one word to the left. |
     | right | Move the cursor right or accept the completion suggestion. |
+    | ctrl+shift+left | Move cursor left a word and select. |
+    | shift+right | Move cursor right and select. |
     | ctrl+right | Move the cursor one word to the right. |
     | backspace | Delete the character to the left of the cursor. |
+    | ctrl+shift+right | Move cursor right a word and select. |
     | home,ctrl+a | Go to the beginning of the input. |
     | end,ctrl+e | Go to the end of the input. |
+    | shift+home | Select up to the input start. |
+    | shift+end | Select up to the input end. |
     | delete,ctrl+d | Delete the character to the right of the cursor. |
     | enter | Submit the current value of the input. |
     | ctrl+w | Delete the word to the left of the cursor. |
     | ctrl+u | Delete everything to the left of the cursor. |
     | ctrl+f | Delete the word to the right of the cursor. |
     | ctrl+k | Delete everything to the right of the cursor. |
+    | ctrl+x | Cut selected text. |
+    | ctrl+c | Copy selected text. |
+    | ctrl+v | Paste text from the clipboard. | 
     """
 
     COMPONENT_CLASSES: ClassVar[set[str]] = {
