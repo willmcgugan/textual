@@ -320,16 +320,16 @@ class StylesBase:
     """If `relative` offset is applied to widgets current position, if `absolute` it is applied to (0, 0)."""
 
     border = BorderProperty(layout=True)
-    """Set the border of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the border of the widget e.g. ("round", "green") or "none"."""
 
     border_top = BoxProperty(Color(0, 255, 0))
-    """Set the top border of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the top border of the widget e.g. ("round", "green") or "none"."""
     border_right = BoxProperty(Color(0, 255, 0))
-    """Set the right border of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the right border of the widget e.g. ("round", "green") or "none"."""
     border_bottom = BoxProperty(Color(0, 255, 0))
-    """Set the bottom border of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the bottom border of the widget e.g. ("round", "green") or "none"."""
     border_left = BoxProperty(Color(0, 255, 0))
-    """Set the left border of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the left border of the widget e.g. ("round", "green") or "none"."""
 
     border_title_align = StringEnumProperty(VALID_ALIGN_HORIZONTAL, "left")
     """The alignment of the border title text."""
@@ -337,17 +337,17 @@ class StylesBase:
     """The alignment of the border subtitle text."""
 
     outline = BorderProperty(layout=False)
-    """Set the outline of the widget e.g. ("rounded", "green") or "none".
+    """Set the outline of the widget e.g. ("round", "green") or "none".
     The outline is drawn *on top* of the widget, rather than around it like border.
     """
     outline_top = BoxProperty(Color(0, 255, 0))
-    """Set the top outline of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the top outline of the widget e.g. ("round", "green") or "none"."""
     outline_right = BoxProperty(Color(0, 255, 0))
-    """Set the right outline of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the right outline of the widget e.g. ("round", "green") or "none"."""
     outline_bottom = BoxProperty(Color(0, 255, 0))
-    """Set the bottom outline of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the bottom outline of the widget e.g. ("round", "green") or "none"."""
     outline_left = BoxProperty(Color(0, 255, 0))
-    """Set the left outline of the widget e.g. ("rounded", "green") or "none"."""
+    """Set the left outline of the widget e.g. ("round", "green") or "none"."""
 
     keyline = KeylineProperty()
     """Keyline parameters."""

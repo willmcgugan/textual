@@ -219,7 +219,7 @@ Consequently, a `Static` selector will also style the button because the `Alert`
 ```css
 Static {
   background: blue;
-  border: rounded green;
+  border: round green;
 }
 ```
 
@@ -230,7 +230,7 @@ Static {
 You may have noticed that the `border` rule exists in both `Static` and `Alert`.
 When this happens, Textual will use the most recently defined sub-class.
 So `Alert` wins over `Static`, and `Static` wins over `Widget` (the base class of all widgets).
-Hence if both rules were in a stylesheet, `Alert` widgets would have a "solid red" border and not a "rounded green" border.
+Hence if both rules were in a stylesheet, `Alert` widgets would have a "solid red" border and not a "round green" border.
 
 ### ID selector
 
