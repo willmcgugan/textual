@@ -20,6 +20,7 @@ from ._log import Log as Log
 from ._markdown import Markdown as Markdown
 from ._markdown import MarkdownViewer as MarkdownViewer
 from ._masked_input import MaskedInput as MaskedInput
+from ._month_calendar import MonthCalendar as MonthCalendar
 from ._option_list import OptionList as OptionList
 from ._placeholder import Placeholder as Placeholder
 from ._pretty import Pretty as Pretty
