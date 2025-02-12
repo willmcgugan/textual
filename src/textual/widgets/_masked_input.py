@@ -473,6 +473,7 @@ class MaskedInput(Input, can_focus=True):
                 which determine when to do input validation. The default is to do
                 validation for all messages.
             valid_empty: Empty values are valid.
+            select_on_focus: Whether to select all text on focus.
             name: Optional name for the masked input widget.
             id: Optional ID for the widget.
             classes: Optional initial classes for the widget.
@@ -569,12 +570,19 @@ class MaskedInput(Input, can_focus=True):
             if char == " ":
                 result.stylize(style, index, index + 1)
 
-        if self._cursor_visible and self.has_focus:
-            if self._cursor_at_end:
-                result.pad_right(1)
-            cursor_style = self.get_component_rich_style("input--cursor")
-            cursor = self.cursor_position
-            result.stylize(cursor_style, cursor, cursor + 1)
+        if self.has_focus:
+            if not self.selection.is_empty:
+                start, end = self.selection
+                start, end = sorted((start, end))
+                selection_style = self.get_component_rich_style("input--selection")
+                result.stylize_before(selection_style, start, end)
+
+            if self._cursor_visible:
+                cursor_style = self.get_component_rich_style("input--cursor")
+                cursor = self.cursor_position
+                if self._cursor_at_end:
+                    result.pad_right(1)
+                result.stylize(cursor_style, cursor, cursor + 1)
 
         segments = list(result.render(self.app.console))
         line_length = Segment.get_line_length(segments)
