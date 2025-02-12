@@ -37,8 +37,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Updated `TextArea` and `Input` behavior when there is a selection and the user presses left or right https://github.com/Textualize/textual/pull/5400
 - Footer can now be scrolled horizontally without holding `shift` https://github.com/Textualize/textual/pull/5404
 - Modified _on_blur method in `Input` to post a `Blurred` message
-- Fixed `Pilot.click` not working with `times` parameter https://github.com/Textualize/textual/pull/5398
-- Fixed select refocusing itself too late https://github.com/Textualize/textual/pull/5420
 - Fixed Log widget not refreshing on resize https://github.com/Textualize/textual/pull/5460
 - Fixed special case with calculating the height of a container where all children have dynamic heights https://github.com/Textualize/textual/pull/5463
 - Fixed scrollbars ignoring background opacity https://github.com/Textualize/textual/issues/5458
