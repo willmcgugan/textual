@@ -1400,6 +1400,7 @@ when an expandable node is selected https://github.com/Textualize/textual/pull/4
 
 ### Added
 
+- Added an option to strip spaces from checked string to the Length validator https://github.com/Textualize/textual/issues/3366
 - `OutOfBounds` exception to be raised by `Pilot` https://github.com/Textualize/textual/pull/3360
 - `TextArea.cursor_screen_offset` property for getting the screen-relative position of the cursor https://github.com/Textualize/textual/pull/3408
 - `Input.cursor_screen_offset` property for getting the screen-relative position of the cursor https://github.com/Textualize/textual/pull/3408

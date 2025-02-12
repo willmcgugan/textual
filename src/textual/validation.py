@@ -390,12 +390,15 @@ class Length(Validator):
         minimum: int | None = None,
         maximum: int | None = None,
         failure_description: str | None = None,
+        strip_whitespace: bool = True,
     ) -> None:
         super().__init__(failure_description=failure_description)
         self.minimum = minimum
         """The inclusive minimum length of the value, or None if unbounded."""
         self.maximum = maximum
         """The inclusive maximum length of the value, or None if unbounded."""
+        self.strip_whitespace = strip_whitespace
+        """If true, then check the length while ignoring trailing and leading whitespace"""
 
     class Incorrect(Failure):
         """Indicates a failure due to the length of the value being outside the range."""
@@ -409,8 +412,9 @@ class Length(Validator):
         Returns:
             The result of the validation.
         """
-        too_short = self.minimum is not None and len(value) < self.minimum
-        too_long = self.maximum is not None and len(value) > self.maximum
+        check_len_on = value.strip() if self.strip_whitespace else value
+        too_short = self.minimum is not None and len(check_len_on) < self.minimum
+        too_long = self.maximum is not None and len(check_len_on) > self.maximum
         if too_short or too_long:
             return ValidationResult.failure([Length.Incorrect(self, value)])
         return self.success()
@@ -431,7 +435,6 @@ class Length(Validator):
                 return f"Must be longer than {self.minimum} characters."
             else:
                 return f"Must be between {self.minimum} and {self.maximum} characters."
-        return None
 
 
 class Function(Validator):
